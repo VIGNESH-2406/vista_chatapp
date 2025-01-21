@@ -1,3 +1,35 @@
+# How to Start the Project
+
+## Steps
+
+1. **Start the MongoDB Database**  
+   - Ensure MongoDB is running locally or configure the database URI in the `.env` file of the Express server.
+   env details to connect with if required:- 
+   JWTKEY=secrettt
+   MONGODB_CONNECTION=mongodb+srv://vigneshpaulraj:Vignesh%40123@realtime-chat-app-clust.cnyjx.mongodb.net/myDatabase?retryWrites=true&w=majority
+
+2. **Start the Express Backend**  
+   ```bash
+   cd express-server
+   npm run dev
+
+
+**Start the Socket Server**  
+   ```bash
+   cd socket-server
+   npm start
+
+
+
+ **Start the React Frontend**
+ cd react-app
+npm start
+
+
+
+
+
+
 # Real-Time Chat Application
 
 This project is a Real-Time Chat Application that consists of three components:  
