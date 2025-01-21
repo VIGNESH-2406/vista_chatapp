@@ -1,0 +1,27 @@
+### Retry Mechanism Approach (Using Socket.IO)
+
+1. **Message Initialization**:
+    - Assign a temporary ID (`tempId`) to each outgoing message.
+    - Add the message to a queue with the status `pending`.
+2. **Send Message to Server**:
+    - Emit the message (`tempId`, sender, receiver, content) via a WebSocket event (e.g., `sendMessage`).
+3. **Server Acknowledgment**:
+    - Server sends an acknowledgment (`messageAck`) with the `tempId` and updated status (`sent` or `delivered`).
+4. **Update Message Status**:
+    - Update the message status in the local state (e.g., from `pending` to `sent`).
+    - Remove acknowledged messages from the retry queue.
+5. **Retry Queue Management**:
+    - If acknowledgment is not received within a timeout (e.g., 5 seconds), add the message to a retry queue.
+6. **Retry Logic**:
+    - Periodically retry messages in the queue (e.g., every 5 seconds).
+    - Resend messages with the same `tempId` and increment a retry counter.
+7. **Max Retry Limit**:
+    - Stop retries after a set number of attempts (e.g., 5).
+    - Mark the message as `failed` and notify the user.
+8. **Handle Server Unavailability**:
+    - Pause retries if the WebSocket connection is lost.
+    - Resume retries when the connection is re-established.
+9. **Persistent Retry Queue (Optional)**:
+    - Use local storage or a database to persist the retry queue for app restarts or refreshes.
+10. **Logging and Error Tracking**:
+    - Log failed attempts for debugging.

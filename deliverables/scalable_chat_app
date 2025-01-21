@@ -1,0 +1,33 @@
+### **Scalability Mechanisms**
+
+1. **Redis Pub/Sub**:
+    - Ensures WebSocket instances stay synchronized in distributed environments.
+2. **Kafka**:
+    - Handles message persistence and high throughput for horizontal scalability.
+3. **Error Handling**:
+    - Uses `pause` and `resume` for retrying failed message processing.
+
+### **How It Works**
+
+1. A client sends a message using WebSocket (`event:message`).
+2. The message is published to Redis (`MESSAGES` channel).
+3. Redis subscribers:
+    - Emit the message to all WebSocket-connected clients.
+    - Send the message to Kafka for persistence.
+4. Kafka consumer:
+    - Retrieves messages from the `MESSAGES` topic.
+    - Saves messages to the SQL database.
+5. In case of failures:
+    - Kafka consumer pauses processing and retries after a delay.
+
+    ### **Core Features**
+
+1. **Real-Time Communication**:
+    - Clients send and receive messages through WebSockets.
+2. **Message Persistence**:
+    - Messages are stored in the database via Kafka consumers.
+3. **Scalability**:
+    - Redis Pub/Sub enables communication across multiple WebSocket instances.
+    - Kafka handles high-throughput message streams.
+4. **Error Handling and Retry**:
+    - Messages failing to process are paused and retried after a delay.
