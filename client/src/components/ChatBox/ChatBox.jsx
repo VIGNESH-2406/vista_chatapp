@@ -11,28 +11,32 @@ import { io } from "socket.io-client";
 // Socket initialization
 const socket = io("http://localhost:8800");
 
-const ChatBox = ({ chat, currentUser, setSendMessage, receivedMessage }) => {
+const ChatBox = ({ chat, currentUser, setSendMessage, receivedMessage,onTyping, onStopTyping }) => {
   const [userData, setUserData] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false); // State to track if the other user is typing
+  const typingTimeoutRef = useRef(null); // Use a ref to persist timeout across renders
+  const imageRef = useRef();
 
   const { user } = useSelector((state) => state.authReducer.authData);
   const dispatch = useDispatch();
-
+  const handleInputChange = () => {
+    onTyping();
+    // Clear the previous timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    // Set a new timeout
+    typingTimeoutRef.current = setTimeout(() => {
+      onStopTyping();
+    }, 2000); // Stop typing after 2 seconds of inactivity
+  };
   // Handle message input changes
   const handleChange = (newMessage) => {
     setNewMessage(newMessage);
-    handleTyping(); // Emit typing notification when user types
+    handleInputChange(); // Emit typing notification when user types
   };
 
-// Handle typing notification
-const handleTyping = () => {
-  const receiverId = chat.members.find((id) => id !== currentUser);
-  
-  // Emit typing event to the receiver
-  socket.emit("typing", { senderId: currentUser, receiverId });
-};
 
   // Fetch user data for chat header
   useEffect(() => {
@@ -101,27 +105,17 @@ const handleTyping = () => {
   }, [receivedMessage]);
 
 
-// Listen for typing notifications from the server
-useEffect(() => {
-  socket.on("typing-notification", (data) => {
-    // Show typing notification if the current user is the receiver
-    if (data.senderId !== currentUser) {
-      setIsTyping(true);
+  // const handleInputChange = (e) => {
+  //   setMessage(e.target.value);
+  //   onTyping();
+  //   clearTimeout(typingTimeout);
 
-      // Stop showing the notification after a short delay
-      setTimeout(() => {
-        setIsTyping(false);
-      }, 1000);
-    }
-  });
+  //   const typingTimeout = setTimeout(() => {
+  //     onStopTyping();
+  //   }, 2000); // Stop typing after 2 seconds of inactivity
+  // };
 
-  return () => {
-    socket.off("typing-notification");
-  };
-}, [currentUser]);
-  
 
-  const imageRef = useRef();
   return (
     <>
       <div className="ChatBox-container">
@@ -147,7 +141,7 @@ useEffect(() => {
                   <span>
                     {user?.firstname} {user?.lastname}
                   </span>
-                  <button className="button logout-button" onClick={handleLogOut}>
+                  <button style={{ marginTop:"16px" }}  className="button logout-button" onClick={handleLogOut}>
                     Log Out
                   </button>
                 </div>
@@ -161,7 +155,8 @@ useEffect(() => {
                 <div key={message._id} ref={scroll} className={message.senderId === currentUser ? "message own" : "message"}>
                   <span>{message.text}</span>
                   <span>{format(message.createdAt)}</span>
-                  <span style={{"fontSize":"12px"}}>{message.status}</span>
+                  {message.senderId === currentUser ?  <span style={{"fontSize":"12px"}}>{message.status === "pending" ? "sent":message.status}</span>:<></>}
+                 
                 </div>
               ))}
             </div>
@@ -176,17 +171,15 @@ useEffect(() => {
               <input type="file" style={{ display: "none" }} ref={imageRef} />
             </div>
 
-            {/* Typing notification - Only for the receiver */}
-            {isTyping && <div className="typing-notification">Typing...</div>}
           </>
         ) : (
           <div>
-            <span className="chatbox-empty-message">Tap on a chat to start conversation...</span>
-            <div style={{ fontSize: "0.9rem", fontWeight: "bold" }}>
-              <span>
+            <span style={{ marginTop:"10px"}} className="chatbox-empty-message">Tap on a chat to start conversation...</span>
+            <div style={{ fontSize: "0.9rem", fontWeight: "bold" ,marginLeft:"25px" }}>
+              <span style={{ marginLeft:"1000px"}}>
                 {user?.firstname} {user?.lastname}
               </span>
-              <button className="button logout-button" onClick={handleLogOut}>
+              <button style={{ marginTop:"16px" ,marginLeft:"1000px"}} className="button logout-button" onClick={handleLogOut}>
                 Log Out
               </button>
             </div>

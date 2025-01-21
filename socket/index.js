@@ -92,6 +92,31 @@ io.on("connection", (socket) => {
     // Emit updated users list to all connected clients
     io.emit("get-users", activeUsers);
   });
+
+
+  // Typing event
+  socket.on("typing", (data) => {
+    const { chatId, senderId } = data;
+   console.log(data,"typing     data")
+
+    const recipient = activeUsers.find((user) => user.userId !== senderId);
+    if (recipient) {
+      io.to(recipient.socketId).emit("user-typing", data);
+    }
+  });
+
+  // Stop typing event
+  socket.on("stop-typing", (data) => {
+    const { chatId, senderId } = data;
+   console.log(data,"stop-typing     data")
+    const recipient = activeUsers.find((user) => user.userId !== senderId);
+    if (recipient) {
+      io.to(recipient.socketId).emit("user-stopped-typing", data);
+    }
+  });
+
+
+
   socket.on("disconnect", () => {
     // Remove user from active users on disconnect
     activeUsers = activeUsers.filter((user) => user.socketId !== socket.id);

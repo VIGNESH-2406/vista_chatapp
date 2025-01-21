@@ -12,4 +12,4 @@ export const addMessage = (data) => API.post('/message/', data);
 export const updateMessagesBySenderId = (senderId) =>  API.put(`/message/status/sender/${senderId}`);
 
 // update all messages status in a chat to "read"
-export const updateMessagesByChatId = (chatId) => API.put(`/message/status/read/${chatId}`);
+export const updateMessagesByChatId = (chatId,currentUser) => API.put(`/message/status/read/${chatId}/${currentUser}`);

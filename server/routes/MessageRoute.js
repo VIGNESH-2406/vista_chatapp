@@ -8,6 +8,6 @@ router.get('/:chatId', getMessages);
 router.post("/updateStatus",UpateMessageStatus)
 router.put("/status/sender/:senderId",updateUserMessageToDelivered)
 router.put("/status/receiver/:receiverId",InitialupdateUserMessageToDelivered)
-router.put("/status/read/:chatId", updateMessageStatusToRead);
+router.put("/status/read/:chatId/:currentUser", updateMessageStatusToRead);
 
 export default router

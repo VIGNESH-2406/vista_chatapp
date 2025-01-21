@@ -10,7 +10,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { io } from "socket.io-client";
 
 const Chat = () => {
-  const dispatch = useDispatch();
   const socket = useRef();
   const { user } = useSelector((state) => state.authReducer.authData);
 
@@ -21,7 +20,8 @@ const Chat = () => {
   const [receivedMessage, setReceivedMessage] = useState(null);
   const [selectedAgent, setSelectedAgent] = useState("");
   const [agents, setAgents] = useState([]);
-
+  const [typing, setTyping] = useState(false);
+  const [typingMessage, setTypingMessage] = useState("");
   // Get the chat in chat section
   const getChats = async () => {
     try {
@@ -44,7 +44,22 @@ const Chat = () => {
       console.log(users, "users")
       setOnlineUsers(users);
     });
+    socket.current.on("user-typing", (data) => {
+      if (data.chatId === currentChat?._id) {
+        setTypingMessage(`${data.senderName} is typing...`);
+      }
+    });
+
+    socket.current.on("user-stopped-typing", (data) => {
+      if (data.chatId === currentChat?._id) {
+        setTypingMessage("");
+      }
+    });
+     return () => {
+      socket.current.disconnect();
+    };
   }, [user]);
+
 
   // Send Message to socket server
   useEffect(() => {
@@ -54,19 +69,6 @@ const Chat = () => {
     // sender id append in data and update the message status
   }, [sendMessage]);
 
-
-  // // Get the message from socket server
-  // useEffect(() => {
-  //   socket.current.on("recieve-message", (data) => {
-  //     // fetch message by senderid and update the status of message to delivered by making api call 
-  //     console.log(data)
-  //     setReceivedMessage(data);
-  //   }
-
-  //   );
-  //   getChats();
-
-  // }, []);
 
   useEffect(() => {
     socket.current.on("recieve-message", async (data) => {
@@ -130,7 +132,24 @@ const Chat = () => {
   };
 
 
+  const handleTyping = () => {
+    if (currentChat) {
+      socket.current.emit("typing", {
+        chatId: currentChat._id,
+        senderId: user._id,
+        senderName: `${user.firstname} ${user.lastname}`,
+      });
+    }
+  };
 
+  const handleStopTyping = () => {
+    if (currentChat) {
+      socket.current.emit("stop-typing", {
+        chatId: currentChat._id,
+        senderId: user._id,
+      });
+    }
+  };
 
 
   return (
@@ -148,20 +167,22 @@ const Chat = () => {
               padding: "0 20px",
             }}
           >
-            <h2 style={{ margin: 0 }}>Chatsss</h2>
+            <h2 style={{ margin: 0 }}>Chats</h2>
+
         {user.isAdmin === true ? <></>:    <div>
               <label htmlFor="agent-select" style={{ marginRight: "10px" }}>
-                Select Agent:
               </label>
               <select
                 id="agent-select"
                 value={selectedAgent}
                 onChange={handleChange}
                 style={{
-                  padding: "5px",
+                  padding: "14px",
                   fontSize: "14px",
                   border: "1px solid #ccc",
                   borderRadius: "5px",
+                  marginLeft:"10px",
+                  backgroundColor:"lightBlue"
                 }}
               >
                 <option value="" disabled>
@@ -183,6 +204,7 @@ const Chat = () => {
           </div>
 
           <div className="Chat-list">
+
             {chats.map((chat) => (
               <div
                 onClick={() => {
@@ -194,7 +216,9 @@ const Chat = () => {
                   currentUser={user?._id}
                   online={checkOnlineStatus(chat)}
                 />
+
               </div>
+              
             ))}
           </div>
         </div>
@@ -211,7 +235,12 @@ const Chat = () => {
           currentUser={user._id}
           setSendMessage={setSendMessage}
           receivedMessage={receivedMessage}
+          onTyping={handleTyping}
+          onStopTyping={handleStopTyping}
         />
+                          {typingMessage && (
+          <div className="TypingNotification">{typingMessage}</div>
+        )}
       </div>
     </div>
   );

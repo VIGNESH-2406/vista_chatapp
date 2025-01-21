@@ -20,21 +20,44 @@ export const getMessages = async (req, res) => {
   const { chatId } = req.params;
   try {
     const result = await MessageModel.find({ chatId });
-    console.log(result,"result of get messages")
+    console.log(result, "result of get messages")
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json(error);
   }
 };
+// export const UpateMessageStatus = async (req, res) => {
+//   const { senderId, status } = req.body;
+
+//   try {
+//     const updatedMessages = await MessageModel.updateMany(
+//       { senderId }, // Filter messages by senderId
+//       { $set: { status } } // Update the status field
+//     );
+//     console.log(updatedMessages, "updatedMessages")
+//     res.status(200).json({
+//       message: "Messages updated successfully",
+//       data: updatedMessages,
+//     });
+//   } catch (error) {
+//     console.error("Error updating messages:", error);
+//     res.status(500).json({ message: "Failed to update messages", error });
+//   }
+// }
+
 export const UpateMessageStatus = async (req, res) => {
   const { senderId, status } = req.body;
 
   try {
     const updatedMessages = await MessageModel.updateMany(
-      { senderId }, // Filter messages by senderId
+      {
+        senderId, // Filter messages by senderId
+        status: "pending", // Only update messages that are in "pending" status
+      },
       { $set: { status } } // Update the status field
     );
-    console.log(updatedMessages, "updatedMessages")
+
+    console.log(updatedMessages, "updatedMessages");
     res.status(200).json({
       message: "Messages updated successfully",
       data: updatedMessages,
@@ -43,7 +66,8 @@ export const UpateMessageStatus = async (req, res) => {
     console.error("Error updating messages:", error);
     res.status(500).json({ message: "Failed to update messages", error });
   }
-}
+};
+
 export const updateUserMessageToDelivered = async (req, res) => {
   const { senderId } = req.params;
   try {
@@ -87,16 +111,39 @@ async function getChatsForUser(userId) {
 }
 
 
-export const updateMessageStatusToRead = async (req, res) => {
-  const { chatId } = req.params;
-  console.log(chatId, "to update Message Status To Read")
+// export const updateMessageStatusToRead = async (req, res) => {
+//   const { chatId } = req.params;
+//   console.log(chatId, "to update Message Status To Read")
 
+//   try {
+//     // Update all messages in the given chat to "read"
+//     const result = await MessageModel.updateMany(
+//       { chatId: chatId },  // Filter by chatId
+//       { $set: { status: "read" } }  // Update status to "read"
+//     );
+//     res.status(200).json(result);
+//   } catch (error) {
+//     console.error("Error updating message status:", error);
+//     res.status(500).json({ message: "Error updating message status" });
+//   }
+// };
+
+export const updateMessageStatusToRead = async (req, res) => {
+  const { chatId, currentUser } = req.params;
+  console.log(currentUser, "currentUser")
   try {
-    // Update all messages in the given chat to "read"
+    console.log(chatId, "to update Message Status To Read");
+
+    // Update messages sent by the opposite user to "read"
     const result = await MessageModel.updateMany(
-      { chatId: chatId },  // Filter by chatId
-      { $set: { status: "read" } }  // Update status to "read"
+      {
+        chatId,          // Filter by chatId
+        senderId: { $ne: currentUser }, // Ensure messages are not from the current user
+        status: { $ne: "read" }, // Update only if not already "read"
+      },
+      { $set: { status: "read" } } // Update status to "read"
     );
+
     res.status(200).json(result);
   } catch (error) {
     console.error("Error updating message status:", error);

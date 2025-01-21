@@ -26,14 +26,24 @@ const Conversation = ({ data, currentUser, online }) => {
 
   // Function to handle click and update message status to "read"
    // Handle click to mark all messages as read
-   const handleMarkAsRead = async () => {
+  //  const handleMarkAsRead = async () => {
+  //   try {
+  //     await updateMessagesByChatId(data._id); // Pass the chatId to the API function
+  //     console.log("All messages in this chat marked as read");
+  //   } catch (error) {
+  //     console.error("Error marking messages as read:", error.message);
+  //   }
+  // };
+
+  const handleMarkAsRead = async () => {
     try {
-      await updateMessagesByChatId(data._id); // Pass the chatId to the API function
-      console.log("All messages in this chat marked as read");
+      await updateMessagesByChatId(data._id, currentUser); // Pass the chatId and currentUserId
+      console.log("All messages in this chat marked as read","currentUser",currentUser);
     } catch (error) {
       console.error("Error marking messages as read:", error.message);
     }
   };
+  
 
   return (
     <>
