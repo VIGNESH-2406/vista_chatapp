@@ -1,6 +1,14 @@
 # How to Start the Project
 
 ## Steps
+1. **credentials**  
+ customer login:-
+ username:- susy tom
+ password:-  susy
+
+ Agent login:- 
+ username:- agent1
+ password:- agent1
 
 1. **Start the MongoDB Database**  
    - Ensure MongoDB is running locally or configure the database URI in the `.env` file of the Express server.
