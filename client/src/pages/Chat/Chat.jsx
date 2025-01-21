@@ -186,7 +186,7 @@ const Chat = () => {
                 }}
               >
                 <option value="" disabled>
-                  -- Choose an Agent --
+               Choose an Agent to Chat
                 </option>
                 {agents.length > 0 ? (
                   agents.map((agent) => (
