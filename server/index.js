@@ -76,7 +76,7 @@ const insert = async () => {
     console.error(error);
   }
 }
-insert()
+// insert()
 
 
 app.listen(PORT, () => {

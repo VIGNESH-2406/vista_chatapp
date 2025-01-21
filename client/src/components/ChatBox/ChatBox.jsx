@@ -104,18 +104,6 @@ const ChatBox = ({ chat, currentUser, setSendMessage, receivedMessage,onTyping, 
     }
   }, [receivedMessage]);
 
-
-  // const handleInputChange = (e) => {
-  //   setMessage(e.target.value);
-  //   onTyping();
-  //   clearTimeout(typingTimeout);
-
-  //   const typingTimeout = setTimeout(() => {
-  //     onStopTyping();
-  //   }, 2000); // Stop typing after 2 seconds of inactivity
-  // };
-
-
   return (
     <>
       <div className="ChatBox-container">

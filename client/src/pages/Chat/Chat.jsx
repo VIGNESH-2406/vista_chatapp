@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { userChats, createChat } from "../../api/ChatRequests";
 import { getAllUser } from "../../api/UserRequests";
 import { updateMessagesBySenderId } from "../../api/MessageRequests";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { io } from "socket.io-client";
 
 const Chat = () => {
@@ -20,7 +20,6 @@ const Chat = () => {
   const [receivedMessage, setReceivedMessage] = useState(null);
   const [selectedAgent, setSelectedAgent] = useState("");
   const [agents, setAgents] = useState([]);
-  const [typing, setTyping] = useState(false);
   const [typingMessage, setTypingMessage] = useState("");
   // Get the chat in chat section
   const getChats = async () => {
@@ -36,29 +35,56 @@ const Chat = () => {
     getChats();
   }, [user._id]);
 
-  // Connect to Socket.io
   useEffect(() => {
-    socket.current = io("ws://localhost:8800");
-    socket.current.emit("new-user-add", user._id);
-    socket.current.on("get-users", (users) => {
-      console.log(users, "users")
-      setOnlineUsers(users);
-    });
-    socket.current.on("user-typing", (data) => {
-      if (data.chatId === currentChat?._id) {
-        setTypingMessage(`${data.senderName} is typing...`);
-      }
-    });
+    // Initialize the socket only once
+    if (!socket.current) {
+      socket.current = io("ws://localhost:8800");
 
-    socket.current.on("user-stopped-typing", (data) => {
-      if (data.chatId === currentChat?._id) {
-        setTypingMessage("");
-      }
-    });
-     return () => {
-      socket.current.disconnect();
-    };
+      socket.current.emit("new-user-add", user._id);
+      socket.current.on("get-users", (users) => {
+        setOnlineUsers(users);
+      });
+
+      socket.current.on("recieve-message", async (data) => {
+        try {
+          if (data.senderId) {
+            await updateMessagesBySenderId(data.senderId);
+          }
+          setReceivedMessage(data);
+        } catch (error) {
+          console.error("Error updating message status:", error);
+        }
+      });
+
+      return () => {
+        socket.current.disconnect();
+      };
+    }
   }, [user]);
+
+
+  useEffect(() => {
+    // Handle typing events when currentChat changes
+    if (currentChat) {
+      socket.current.on("user-typing", (data) => {
+        if (data.chatId === currentChat._id) {
+          setTypingMessage(`${data.senderName} is typing...`);
+        }
+      });
+
+      socket.current.on("user-stopped-typing", (data) => {
+        if (data.chatId === currentChat._id) {
+          setTypingMessage("");
+        }
+      });
+    }
+
+    // Clean up typing events
+    return () => {
+      socket.current.off("user-typing");
+      socket.current.off("user-stopped-typing");
+    };
+  }, [currentChat]);
 
 
   // Send Message to socket server
@@ -78,14 +104,12 @@ const Chat = () => {
           await updateMessagesBySenderId(data.senderId);
         }
         setReceivedMessage(data);
-        console.log("Messages from sender updated to delivered", data);
       } catch (error) {
         console.error("Error updating message status:", error);
       }
     });
-  
-    getChats();
-  }, []);
+
+  }, [chats]);
 
 
   const checkOnlineStatus = (chat) => {
@@ -98,34 +122,25 @@ const Chat = () => {
     const getAgents = async () => {
       try {
         const { data } = await getAllUser();
-        console.log(data, "data");
         const filteredAgents = data.filter((user) => user.isAdmin === true);
         setAgents(filteredAgents);
       } catch (error) {
         console.error("Error fetching users:", error);
       }
     };
-  
+
     getAgents();
   }, []);
-  
-  // Log the agents state to verify it updates
-  useEffect(() => {
-    console.log(agents, "agents state updated");
-  }, [agents]);
 
   const handleChange = async (event) => {
     const receiverId = event.target.value;
     setSelectedAgent(receiverId);
-    console.log("Selected Agent:", receiverId);
-
 
     try {
       const senderId = user._id;
       const body = { senderId, receiverId };
       const response = await createChat(body);
       getChats();
-      console.log("Chat Created:", response.data);
     } catch (error) {
       console.error("Error creating chat:", error);
     }
@@ -169,7 +184,7 @@ const Chat = () => {
           >
             <h2 style={{ margin: 0 }}>Chats</h2>
 
-        {user.isAdmin === true ? <></>:    <div>
+            {user.isAdmin === true ? <></> : <div>
               <label htmlFor="agent-select" style={{ marginRight: "10px" }}>
               </label>
               <select
@@ -181,12 +196,12 @@ const Chat = () => {
                   fontSize: "14px",
                   border: "1px solid #ccc",
                   borderRadius: "5px",
-                  marginLeft:"10px",
-                  backgroundColor:"lightBlue"
+                  marginLeft: "10px",
+                  backgroundColor: "lightBlue"
                 }}
               >
                 <option value="" disabled>
-               Choose an Agent to Chat
+                  Choose an Agent to Chat
                 </option>
                 {agents.length > 0 ? (
                   agents.map((agent) => (
@@ -199,8 +214,8 @@ const Chat = () => {
                 )}
               </select>
 
-            </div>}    
-    
+            </div>}
+
           </div>
 
           <div className="Chat-list">
@@ -218,7 +233,7 @@ const Chat = () => {
                 />
 
               </div>
-              
+
             ))}
           </div>
         </div>
@@ -226,7 +241,7 @@ const Chat = () => {
 
       {/* Right Side */}
 
-      <div className="Right-side-chat" style={{ border:"1px" }}>
+      <div className="Right-side-chat" style={{ border: "1px" }}>
         <div style={{ width: "20rem", alignSelf: "flex-end" }}>
           {/* <NavIcons /> */}
         </div>
@@ -238,7 +253,7 @@ const Chat = () => {
           onTyping={handleTyping}
           onStopTyping={handleStopTyping}
         />
-                          {typingMessage && (
+        {typingMessage && (
           <div className="TypingNotification">{typingMessage}</div>
         )}
       </div>
